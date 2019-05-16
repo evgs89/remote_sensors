@@ -6,9 +6,9 @@ from time import sleep
 
 
 class DataEngine(object):
-    def __init__(self, config_socket, db_file = 'db.sqlite'):
+    def __init__(self, host, port, db_file = 'db.sqlite'):
         self._db_file = db_file
-        self.L = Listener(config_socket['host'], int(config_socket['port']))
+        self.L = Listener(host, int(port))
         self._db_init()
         self._t = None
         self._sync_loop_enabled = True
@@ -44,7 +44,7 @@ class DataEngine(object):
         return True
 
     def _sync_loop(self, period):
-        counter = 0
+        counter = period
         while self._sync_loop_enabled:
             if counter < period:
                 counter += 1
@@ -53,16 +53,22 @@ class DataEngine(object):
                 counter = 0
                 self._sync_messages()
 
-    def start_sync_loop(self, period):
+    def start_sync_loop(self, period = 1):
         self._sync_loop_enabled = True
         self._t = threading.Thread(target = self._sync_loop, args = (int(period) ,))
         self._t.start()
+        return self._t.is_alive()
 
     def stop_sync_loop(self):
+        self.L.stop()
         self._sync_loop_enabled = False
         while self._t.is_alive():
             sleep(.1)
         return True
+
+    def sync_loop_is_alive(self):
+        if self._t:
+            return self._t.is_alive()
 
     def get_last_messages(self):
         conn, cur = self._db_init()
