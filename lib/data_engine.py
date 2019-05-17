@@ -71,7 +71,7 @@ class DataEngine(object):
             return self._t.is_alive()
 
     def get_last_messages(self):
-        conn, cur = self._db_init()
+        conn, cur = self._connect_db()
         try:
             cur.execute("SELECT dev_id, data, received_at FROM last_messages")
         except Exception as e:
@@ -83,7 +83,7 @@ class DataEngine(object):
         return data
 
     def get_messages_by_id(self, id_):
-        conn, cur = self._db_init()
+        conn, cur = self._connect_db()
         try:
             cur.execute("SELECT dev_id, data, received_at FROM messages WHERE dev_id = ?", (str(id_), ))
         except Exception as e:
