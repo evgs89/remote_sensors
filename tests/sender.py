@@ -10,7 +10,7 @@ class Sender(object):
         self.port = port
 
     def send(self):
-        text = f'{str(self.id)}%%{id_generator()}'
+        text = str(self.id) + '%%' + id_generator()
         try:
             sock = socket.socket()
             sock.connect((self.host, self.port))
@@ -20,5 +20,5 @@ class Sender(object):
             sock.close()
             return text, reply
         except ConnectionRefusedError:
-            print(f'Socket {self.host}:{self.port} is inactive or busy')
+            print('Socket {host}:{port} is inactive or busy'.format(host = self.host, port = self.port))
             return text, None

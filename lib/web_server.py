@@ -28,8 +28,8 @@ class WebInterface(object):
         rows = ''
         messages = self.db_engine.get_last_messages()
         for i in messages:
-            rows += f"<tr><td><a href = '/{i[0]}'>{i[0]}</a></td><td>{i[1]}</td><td>{i[2]}</td></tr>\n"
-        return f"""
+            rows += "<tr><td><a href = '/{0}'>{0}</a></td><td>{1}</td><td>{2}</td></tr>\n".format(i[0], i[1], i[2])
+        return """
         <!DOCTYPE html>
         <html>
         <head>
@@ -46,14 +46,14 @@ class WebInterface(object):
         </table>
         </body>
         </html>
-        """
+        """.format(rows = rows)
 
     def messages_by_id(self, id):
         rows = ''
         messages = self.db_engine.get_messages_by_id(id)
         for i in messages:
-            rows += f"<tr><td>{i[1]}</td><td>{i[2]}</td></tr>\n"
-        return f"""
+            rows += "<tr><td>{0}</td><td>{1}</td></tr>\n".format(i[1], i[2])
+        return """
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -70,4 +70,4 @@ class WebInterface(object):
                 </table>
                 </body>
                 </html>
-                """
+                """.format(id = id, rows = rows)

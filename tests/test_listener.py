@@ -27,7 +27,7 @@ class test_Listener(unittest.TestCase):
                 text, reply = s.send()
                 self.assertEqual(b'06', reply)
                 listened = L.get_data()[0]
-                self.assertEqual(text, f"{listened.id}%%{listened.data}")
+                self.assertEqual(text, "{id}%%{data}".format(id = listened.id, data = listened.data))
                 self.assertIsInstance(listened.timestamp, datetime.datetime)
         self.assertTrue(L.is_active())
         self.assertTrue(L.stop())
