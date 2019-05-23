@@ -40,7 +40,7 @@ class Listener(object):
 
     def get_data(self):
         """
-        Get all recieved data
+        Get all received data
         """
         data = []
         try:
@@ -61,6 +61,7 @@ class Listener(object):
         try:
             sock.bind((self.host, self.port))
         except OSError as msg:
+            print("OSError: ", str(msg))
             sock.close()
             return False
         sock.listen(1)
@@ -70,12 +71,14 @@ class Listener(object):
             if not data:
                 conn, addr = sock.accept()
             else:
-                if data == b'06':
-                    sock.close()
-                    return False
-                else:
-                    data = data.decode(encoding = 'ascii')
+                data = data.decode(encoding = 'ascii')
+                try:
                     id_, text = data.split('%%')
-                    self.queue.put_nowait(Message(datetime.datetime.now(), id_, text))
                     conn.send(b'06')
+                except ValueError as e:
+                    print(str(e))
+                    id_ = 'ERROR'
+                    text = str(data)
+                    conn.send(b'15')
+                self.queue.put_nowait(Message(datetime.datetime.now(), id_, text))
         sock.close()

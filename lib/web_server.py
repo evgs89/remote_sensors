@@ -4,7 +4,6 @@ from lib.bottle import route, run, template
 from lib.data_engine import DataEngine
 
 
-
 class WebInterface(object):
     def __init__(self):
         conf = configparser.ConfigParser(allow_no_value = True)

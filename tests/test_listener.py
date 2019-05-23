@@ -18,6 +18,11 @@ class test_Listener(unittest.TestCase):
         self.assertTrue(L.stop())
 
     def test_get_data(self):
+        def get_data_now(listener):
+            for i in range(3):
+                data = listener.get_data()
+                if len(data) > 0: return data
+                else: sleep(.1)
         L = Listener(self.host, self.port)
         self.assertTrue(L.start())
         sleep(1)
@@ -26,7 +31,7 @@ class test_Listener(unittest.TestCase):
                 s = Sender(id_, self.host, self.port)
                 text, reply = s.send()
                 self.assertEqual(b'06', reply)
-                listened = L.get_data()[0]
+                listened = get_data_now(L)[0]
                 self.assertEqual(text, "{id}%%{data}".format(id = listened.id, data = listened.data))
                 self.assertIsInstance(listened.timestamp, datetime.datetime)
         self.assertTrue(L.is_active())
