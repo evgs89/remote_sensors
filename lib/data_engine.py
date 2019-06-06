@@ -3,6 +3,10 @@ import os
 import threading
 from lib.listener import Listener
 from time import sleep
+from datetime import datetime
+
+
+datetime_format = "%d-%m-%Y %H:%M:%S.%f"
 
 
 class DataEngine(object):
@@ -34,9 +38,9 @@ class DataEngine(object):
             try:
                 cur.execute("""INSERT OR REPLACE INTO last_messages(dev_id, data, received_at) 
                                VALUES (?, ?, ?)""",
-                            (message.id, message.data, message.timestamp.strftime("%d-%m-%Y %H:%M:%S.%f")))
+                            (message.id, message.data, message.timestamp.strftime(datetime_format)))
                 cur.execute("INSERT INTO messages(dev_id, data, received_at) VALUES (?, ?, ?)",
-                            (message.id, message.data, message.timestamp.strftime("%d-%m-%Y %H:%M:%S.%f")))
+                            (message.id, message.data, message.timestamp.strftime(datetime_format)))
                 conn.commit()
             except Exception as e:
                 print(e)
@@ -94,6 +98,20 @@ class DataEngine(object):
             data.append(tuple(row))
         return data
 
+    def delete_messages_before_date(self, date: datetime):
+        conn, cur = self._connect_db()
+        try:
+            cur.execute("SELECT dev_id, data, received_at FROM messages")
+        except Exception as e:
+            print('DB seems to be corrupted, error is: ', str(e))
+        rows = cur.fetchall()
+        counter_deleted = 0
+        for row in rows:
+            if row[2].strptime(datetime_format) < date:
+                cur.execute("DELETE FROM messages WHERE received_at = ?", (row[2], ))
+                counter_deleted += 1
+        conn.commit()
+        return counter_deleted
 
 
 

@@ -47,6 +47,8 @@ class test_DataEngine(unittest.TestCase):
         self.assertIsInstance(data[0][1], str)
         os.remove(dbfile)
 
+    def delete_messages_before_date(self):
+        dbfile = 'test_delete_messages.sqlite'
 
 
 

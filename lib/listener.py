@@ -64,6 +64,7 @@ class Listener(object):
             print("OSError: ", str(msg))
             sock.close()
             return False
+        sock.settimeout(1)
         sock.listen(1)
         conn, addr = sock.accept()
         while self._listener_active:
