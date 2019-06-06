@@ -5,7 +5,7 @@ from collections import namedtuple
 from time import sleep
 
 
-Message = namedtuple('Message', 'timestamp, id, data')
+Message = namedtuple('Message', 'timestamp, id, data, balance')
 
 
 class Listener(object):
@@ -57,28 +57,46 @@ class Listener(object):
             return False
 
     def _main_loop(self):
-        sock = socket.socket()
-        try:
-            sock.bind((self.host, self.port))
-        except OSError as msg:
-            print("OSError: ", str(msg))
-            sock.close()
-            return False
-        sock.listen(1)
-        conn, addr = sock.accept()
         while self._listener_active:
-            data = conn.recv(self.data_block_size)
-            if not data:
-                conn, addr = sock.accept()
-            else:
-                data = data.decode(encoding = 'ascii')
+            try:
+                sock = socket.socket()
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 try:
-                    id_, text = data.split('%%')
-                    conn.send(b'06')
-                except ValueError as e:
-                    print(str(e))
-                    id_ = 'ERROR'
-                    text = str(data)
-                    conn.send(b'15')
-                self.queue.put_nowait(Message(datetime.datetime.now(), id_, text))
-        sock.close()
+                    sock.bind((self.host, self.port))
+                except OSError as msg:
+                    print("OSError: ", str(msg))
+                    sock.close()
+                    return False
+                sock.listen(1)
+                while self._listener_active:
+                    try:
+                        conn, addr = sock.accept()
+                        data = conn.recv(self.data_block_size)
+                        if data:
+                            data = data.decode(encoding = 'ascii')
+                            try:
+                                data_list = data.split('%%')
+                                id_ = data_list[0]
+                                text = data_list[1]
+                                balance = None if len(data_list) == 2 else data_list[2]
+                                conn.send(b'06')
+                            except ValueError as e:
+                                print(str(e))
+                                id_ = 'ERROR'
+                                text = str(data)
+                                balance = None
+                                conn.send(b'15')
+                            self.queue.put_nowait(Message(datetime.datetime.now(), id_, text, balance))
+                            sock.shutdown(socket.SHUT_RDWR)
+                            sock.close()
+                            sock = socket.socket()
+                    except OSError:
+                        break
+                    except Exception as e:
+                        print(str(e))
+                        sock.close()
+            except OSError as e:
+                print('SOCKET BUSY', str(e))
+                sleep(1)
+            except Exception as e:
+                print(str(e))
