@@ -9,7 +9,7 @@ class test_Listener(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = ''
-        cls.port = 30110
+        cls.port = 30111
 
     def test_start_stop(self):
         L = Listener(self.host, self.port)
@@ -27,13 +27,19 @@ class test_Listener(unittest.TestCase):
         self.assertTrue(L.start())
         sleep(1)
         for id_ in range(5):
-            for i in range(10):
+            for balance in [None, 1, 2, 3]:
                 s = Sender(id_, self.host, self.port)
-                text, reply = s.send()
-                self.assertEqual(b'06', reply)
+                text, reply = s.send(balance = balance)
+                self.assertEqual(b'\x06', reply)
                 listened = get_data_now(L)[0]
-                self.assertEqual(text, "{id}%%{data}".format(id = listened.id, data = listened.data))
+                if balance:
+                    self.assertEqual(text, "{id}%%{data}%%{balance}".format(id = listened.id,
+                                                                            data = listened.data,
+                                                                            balance = balance))
+                else:
+                    self.assertEqual(text, "{id}%%{data}".format(id = listened.id, data = listened.data))
                 self.assertIsInstance(listened.timestamp, datetime.datetime)
+                sleep(.1)
         self.assertTrue(L.is_active())
         self.assertTrue(L.stop())
 
