@@ -1,8 +1,7 @@
 import sqlite3
 from tests.id_gen import id_generator
 import random
-import datetime
-
+from datetime import datetime, timedelta
 
 def create_test_db(filename, ids, messages):
     conn = sqlite3.connect(filename)
@@ -14,7 +13,7 @@ def create_test_db(filename, ids, messages):
     for i in range(messages):
         id_ = random.choice(id_list)
         text = id_generator(random.randint(12, 24))
-        timestamp = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")
+        timestamp = (datetime.now()) - timedelta(days = random.randint(1, 5)).strftime("%d-%m-%Y %H:%M:%S.%f")
         cur.execute("""INSERT OR REPLACE INTO last_messages(dev_id, data, received_at) 
                                        VALUES (?, ?, ?)""",
                     (id_, text, timestamp))

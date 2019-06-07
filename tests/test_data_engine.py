@@ -1,6 +1,7 @@
 import unittest
 import os
 from time import sleep
+from datetime import datetime, timedelta
 
 from lib.data_engine import DataEngine
 from tests.create_test_db import create_test_db
@@ -11,7 +12,7 @@ class test_DataEngine(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = ''
-        cls.port = 30115
+        cls.port = 30111
         cls.period = 1
 
     def test_start_stop_sync_loop(self):
@@ -47,9 +48,25 @@ class test_DataEngine(unittest.TestCase):
         self.assertIsInstance(data[0][1], str)
         os.remove(dbfile)
 
-    def delete_messages_before_date(self):
+    def delete_messages(self):
         dbfile = 'test_delete_messages.sqlite'
-
+        create_test_db(dbfile, 1, 100)
+        data_engine = DataEngine(self.host, self.port, dbfile)
+        data = data_engine.get_messages_by_id(0)
+        date_before = datetime.now() - timedelta(days = 2)
+        self.assertEqual(100, len(data))
+        counter = 0
+        for row in data:
+            if row[2].strptime(data_engine.datetime_format) < date_before: counter += 1
+        deleted = data_engine.delete_messages(date_before = date_before)
+        self.assertEqual(counter, deleted)
+        os.remove(dbfile)
+        dbfile = 'test_delete_messages.sqlite'
+        create_test_db(dbfile, 2, 100)
+        data = data_engine.get_messages_by_id(0)
+        deleted = data_engine.delete_messages(id_ = 0)
+        self.assertEqual(len(data), deleted)
+        os.remove(dbfile)
 
 
 
