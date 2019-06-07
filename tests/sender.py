@@ -1,5 +1,4 @@
 import socket
-
 from tests.id_gen import id_generator
 
 
@@ -9,19 +8,18 @@ class Sender(object):
         self.host = host
         self.port = port
 
-    def send(self, text = None):
+    def send(self, text = None, balance = None):
         if not text or type(text) not in [str, int, bytes]:
             text = str(self.id) + '%%' + id_generator()
+        if balance:
+            text = text + '%%' + str(balance)
         try:
-            if type(text) == int:
-                text = str(text)
-            if type(text) == str:
-                text = text.encode('ascii')
+            text = str(text).encode('ascii')
             sock = socket.socket()
             sock.connect((self.host, self.port))
             sock.send(text)
             reply = sock.recv(1024)
-            assert (reply == b'06' or reply == b'15')
+            assert (reply == b'\x06' or reply == b'\x15')
             sock.close()
             return text.decode('ascii'), reply
         except ConnectionRefusedError:

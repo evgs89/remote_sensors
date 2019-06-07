@@ -11,7 +11,7 @@ class test_DataEngine(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = ''
-        cls.port = 30110
+        cls.port = 30115
         cls.period = 1
 
     def test_start_stop_sync_loop(self):
@@ -22,7 +22,7 @@ class test_DataEngine(unittest.TestCase):
         sleep(1)
         for i in range(10):
             sender = Sender(i, self.host, self.port)
-            self.assertIsNotNone(sender.send())
+            self.assertIsNotNone(sender.send(balance = 10))
         self.assertTrue(data_engine.stop_sync_loop())
         os.remove(dbfile)
 
