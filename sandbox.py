@@ -7,7 +7,7 @@ while True:
         print("START")
         sock = socket.socket()
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('', 9100))
+        sock.bind(('', 9090))
         sock.listen(1)
         while True:
             try:
@@ -32,3 +32,4 @@ while True:
         print('SOCKET BUSY', str(e))
         sleep(1)
     except Exception as e: print(str(e))
+

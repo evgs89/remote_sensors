@@ -78,10 +78,6 @@ class Listener(object):
 
 
     def _main_loop(self):
-        """
-        this looks a bit complicated, but we've a problem. Sender can't close socket,
-        so I close it manually right after receiving data
-        """
         while self._listener_active:
             try:
                 sock = socket.socket()
@@ -102,6 +98,10 @@ class Listener(object):
                             result, message = self._parse_message(data)
                             conn.send(b'\x06' if result else b'\x15')
                             self.queue.put_nowait(message)
+                            """
+                            this looks a bit complicated, but we've a problem. Sender can't close socket,
+                            so I close it manually right after receiving data
+                            """
                             sock.shutdown(socket.SHUT_RDWR)
                             sock.close()
                             sock = socket.socket()
