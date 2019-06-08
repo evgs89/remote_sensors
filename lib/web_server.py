@@ -22,6 +22,10 @@ class WebInterface(object):
     def bound_bottle(self):
         route('/')(self.last_messages)
         route('/<id>')(self.messages_by_id)
+        route('/delete')(self.delete_messages)
+        route('/delete/<id_>')(self.delete_messages)
+        route('/delete/accept/')(self.delete_messages_accepted)
+        route('/delete/accept/<id_>')(self.delete_messages_accepted)
 
     def last_messages(self):
         rows = ''
@@ -43,6 +47,7 @@ class WebInterface(object):
                 {rows}
             </tr>
         </table>
+        <div><a href='/delete'>Очистить всю базу данных</a></div>
         </body>
         </html>
         """.format(rows = rows)
@@ -67,6 +72,34 @@ class WebInterface(object):
                         {rows}
                     </tr>
                 </table>
+                <div><a href='/delete/{id}'>Удалить все сообщения от данного устройства</a></div>
                 </body>
                 </html>
                 """.format(id = id, rows = rows)
+
+    def delete_messages(self, id_ = None):
+        return """
+        <!DOCTYPE html>
+                <html>
+                <head>
+                <title>Remote Sensors</title>
+                </head>
+                <body>
+                <hr>
+                <header>Удаление данных</header>
+                <div>
+                Уверены, что хотите удалить данные?<br>
+                <a href="/delete/accept/{id}">Да</a><a href="/{id}">Нет</a>
+                </div>
+                </body>
+                </html>
+                """.format(id = id_ if id_ else '')
+
+    def delete_messages_accepted(self, id_ = None):
+        deleted = self.db_engine.delete_messages(id_)
+        return """
+        Удалено {0} записей. <br>
+        <a href="/">На главную</a>
+        """.format(deleted)
+
+

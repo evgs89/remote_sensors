@@ -113,12 +113,14 @@ class DataEngine(object):
         rows = cur.fetchall()
         counter_deleted = 0
         for row in rows:
-            if row[2].strptime(self.datetime_format) < date_before:
+            if datetime.strptime(row[2], self.datetime_format) < date_before:
                 if not id_:
                     cur.execute("DELETE FROM messages WHERE received_at = ?", (row[2], ))
+                    cur.execute("DELETE FROM last_messages WHERE received_at = ?", (row[2], ))
                 else:
                     if str(row[0]) == id_:
                         cur.execute("DELETE FROM messages WHERE received_at = ? AND dev_id = ?", (row[2], str(id_)))
+                        cur.execute("DELETE FROM last_messages WHERE dev_id = ?", (str(id_), ))
                 counter_deleted += 1
         conn.commit()
         return counter_deleted
