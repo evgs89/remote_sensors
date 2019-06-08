@@ -101,5 +101,3 @@ class WebInterface(object):
         Удалено {0} записей. <br>
         <a href="/">На главную</a>
         """.format(deleted)
-
-

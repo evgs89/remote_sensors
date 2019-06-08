@@ -18,7 +18,7 @@ class DataEngine(object):
     def _db_init(self):
         if not os.path.isfile(self._db_file):
             conn, cur = self._connect_db()
-            cur.execute("CREATE TABLE last_messages (dev_id TEXT NOT NULL PRIMARY KEY, data TEXT, received_at TEXT)")
+            cur.execute("CREATE TABLE last_messages (dev_id TEXT NOT NULL PRIMARY KEY, data TEXT, received_at TEXT, balance TEXT)")
             cur.execute("CREATE TABLE messages (dev_id TEXT NOT NULL, data TEXT, received_at TEXT)")
             conn.commit()
         return True
@@ -84,8 +84,9 @@ class DataEngine(object):
             data.append(tuple(row))
         return data
 
-    def get_messages_by_id(self, id_):
+    def get_messages_by_id(self, id_, sort_by = None, reverse = False):
         conn, cur = self._connect_db()
+        indexes = {'dev_id': 0, 'data': 1, 'received_at': 2, 'balance': 3}
         try:
             cur.execute("SELECT dev_id, data, received_at FROM messages WHERE dev_id = ?", (str(id_), ))
         except Exception as e:
@@ -94,6 +95,8 @@ class DataEngine(object):
         rows = cur.fetchall()
         for row in rows:
             data.append(tuple(row))
+        if sort_by:
+            return sorted(data, key = lambda row: row[])
         return data
 
     def delete_messages(self,
