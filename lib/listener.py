@@ -76,42 +76,37 @@ class Listener(object):
         message = Message(datetime.datetime.now(), id_, text, balance)
         return result, message
 
+    def _create_socket(self):
+        print("CREATE SOCKET")
+        sock = socket.socket()
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind((self.host, self.port))
+            print("BIND OK")
+        except OSError as msg:
+            sock.close()
+            print("OS ERROR: ", msg)
+            return False
+        sock.listen(1)
+        conn, addr = sock.accept()
+        print("CLIENT CONNECTED")
+        return sock, conn, addr
 
     def _main_loop(self):
         while self._listener_active:
             try:
-                sock = socket.socket()
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                try:
-                    sock.bind((self.host, self.port))
-                    sock.listen(1)
-                except OSError as msg:
-                    print("OSError: ", str(msg))
+                sock, conn, addr = self._create_socket()
+                data = conn.recv(self.data_block_size)
+                if data == b'\x06':
+                    conn.send(b'\x06')
+                    print("EOT")
                     sock.close()
-                    sleep(1)
-                    # return False
-                while self._listener_active:
-                    try:
-                        conn, addr = sock.accept()
-                        data = conn.recv(self.data_block_size)
-                        if data:
-                            result, message = self._parse_message(data)
-                            conn.send(b'\x06' if result else b'\x15')
-                            self.queue.put_nowait(message)
-                            """
-                            this looks a bit complicated, but we've a problem. Sender can't close socket,
-                            so I close it manually right after receiving data
-                            """
-                            sock.shutdown(socket.SHUT_RDWR)
-                            sock.close()
-                            sock = socket.socket()
-                    except OSError:
-                        break
-                    except Exception as e:
-                        print("PROCESSING MESSAGE ERROR: ", str(e))
-                        sock.close()
-            except OSError as e:
-                print('SOCKET BUSY', str(e))
-                sleep(1)
+                elif data:
+                    result, message = self._parse_message(data)
+                    conn.send(b'\x06' if result else b'\x15')
+                    self.queue.put_nowait(message)
+                    sock.close()
+                    print("RECEIVED: ", str(data))
             except Exception as e:
                 print(str(e))
+
