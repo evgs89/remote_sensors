@@ -1,4 +1,4 @@
-% rebase('base.tpl', page_info = page_info, data = data)
+% rebase('base.tpl', page_info = page_info, data = data, user = user)
 <header>Данные от отправителя: {{page_info['id']}}</header>
 <table cellspacing=20>
     <tr>
@@ -27,4 +27,6 @@
     % end
 </tr></table>
 </div>
+% if user:
 <div><a href="/delete?id={{page_info['id']}}">Удалить все сообщения от данного устройства</a></div>
+% end

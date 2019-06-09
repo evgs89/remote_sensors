@@ -1,4 +1,4 @@
-% rebase('base.tpl', rows = rows)
+% rebase('base.tpl', rows = rows, user = user)
 <table cellspacing=20>
     <tr>
         <tr><th>ID</th><th>Data</th><th>Balance</th><th>Received at:</th>
@@ -6,6 +6,8 @@
         <tr><td><a href = '/device/{{row[0]}}'>{{row[0]}}</a></td><td>{{row[1]}}</td><td>{{row[2]}}</td><td>{{row[3]}}</td></tr>
         % end
 </table>
+% if user:
 <div>
     <a href='/delete'>Очистить всю базу данных</a>
 </div>
+% end

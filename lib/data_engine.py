@@ -113,6 +113,7 @@ class DataEngine(object):
                         """.format(sort_by, 'DESC' if reverse else 'ASC'), args)
         except Exception as e:
             print('DB seems to be corrupted, error is: ', str(e))
+            pages = 0
         data = []
         rows = cur.fetchall()
         for row in rows:
