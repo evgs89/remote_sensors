@@ -74,8 +74,6 @@ class DataEngine(object):
     def validate_user(self, username: str, password: str):
         secret = md5(password.encode('utf-8')).hexdigest()
         conn, cur = self._connect_db()
-        print(username, password)
-        print("SELECT COUNT(*) FROM users WHERE username = {0} AND password_secret = {1}".format(username, secret))
         cur.execute("SELECT COUNT(*) FROM users WHERE username = ? AND password_secret = ?", (username, secret))
         return cur.fetchone()[0] == 1
 

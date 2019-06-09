@@ -1,4 +1,4 @@
-% rebase('base.tpl')
+% rebase('base.tpl', user = user)
 <form action="/login" method="post">
     Username: <input name="username" type="text" /><br>
     Password: <input name="password" type="password" /><br>

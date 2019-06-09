@@ -29,6 +29,7 @@ class WebInterface(object):
         route('/delete/accept')(self.delete_messages_accepted)
         route('/login')(self.login)
         post('/login')(self.do_login)
+        route('/logout')(self.logout)
 
     @view('index')
     def last_messages(self):
@@ -60,13 +61,13 @@ class WebInterface(object):
         if id_ == "None": id_ = None
         if self.user:
             deleted = self.db_engine.delete_messages(id_)
-            return dict(deleted = deleted)
+            return dict(deleted = deleted, user = self.user)
         else:
             abort(401, "You have no access to this page")
 
     @view('login')
     def login(self):
-        return dict()
+        return dict(user = self.user)
 
     def do_login(self):
         username = request.forms.get('username')
@@ -76,3 +77,14 @@ class WebInterface(object):
         else:
             self.user = None
         return template('login_result', user = self.user)
+
+    @view('logout')
+    def logout(self):
+        accepted = request.query.accepted or 0
+        if accepted:
+            self.user = None
+            return template('login_result', user = self.user)
+        else:
+            return dict(user = self.user)
+
+

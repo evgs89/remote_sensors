@@ -5,7 +5,7 @@
     </head>
     <body>
         <div>
-            % include('header.tpl')
+            % include('header.tpl', user = user)
         </div>
             <header>Сервер активен</header>
         <div>
