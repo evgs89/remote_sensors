@@ -1,7 +1,8 @@
 import configparser
 
-from lib.bottle import route, run, post, request, view, template, abort
+from lib.bottle import route, run, post, request, view, template, abort, response
 from lib.data_engine import DataEngine
+from datetime import datetime, timedelta
 
 
 class WebInterface(object):
@@ -33,6 +34,13 @@ class WebInterface(object):
 
     @view('index')
     def last_messages(self):
+        session_id = request.get_cookie('session_id')
+        if session_id:
+            self.user = self.db_engine.validate_session(session_id)
+            if self.user:
+                response.set_cookie('session_id', session_id,
+                                    expires = datetime.now() +
+                                              timedelta(days = int(self.web_settings['session_expire_days'])))
         messages, pages = self.db_engine.get_last_messages()
         return dict(rows = messages, user = self.user)
 
@@ -72,8 +80,12 @@ class WebInterface(object):
     def do_login(self):
         username = request.forms.get('username')
         password = request.forms.get('password')
-        if self.db_engine.validate_user(username, password):
+        session_id = self.db_engine.validate_user(username, password)
+        if session_id:
             self.user = username
+            response.set_cookie('session_id', session_id,
+                                expires = datetime.now() +
+                                          timedelta(days = int(self.web_settings['session_expire_days'])))
         else:
             self.user = None
         return template('login_result', user = self.user)
@@ -83,6 +95,7 @@ class WebInterface(object):
         accepted = request.query.accepted or 0
         if accepted:
             self.user = None
+            response.delete_cookie('session_id')
             return template('login_result', user = self.user)
         else:
             return dict(user = self.user)

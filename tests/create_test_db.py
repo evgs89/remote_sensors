@@ -1,5 +1,5 @@
 import sqlite3
-from tests.id_gen import id_generator
+from lib.id_gen import id_generator
 import random
 from datetime import datetime, timedelta
 

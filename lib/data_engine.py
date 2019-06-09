@@ -2,6 +2,7 @@ import sqlite3
 import os
 import threading
 from lib.listener import Listener
+from lib.id_gen import id_generator
 from time import sleep
 from datetime import datetime, timedelta
 from hashlib import md5
@@ -21,7 +22,7 @@ class DataEngine(object):
             conn, cur = self._connect_db()
             cur.execute("CREATE TABLE last_messages (dev_id TEXT NOT NULL PRIMARY KEY, data TEXT, balance REAL, received_at TEXT)")
             cur.execute("CREATE TABLE messages (dev_id TEXT NOT NULL, data TEXT, balance REAL, received_at TEXT)")
-            cur.execute("CREATE TABLE users (username TEXT NOT NULL PRIMARY KEY, password_secret NOT NULL, last_login TEXT)")
+            cur.execute("CREATE TABLE users (username TEXT NOT NULL PRIMARY KEY, password_secret NOT NULL, last_login TEXT, session_id TEXT)")
             cur.execute("INSERT INTO users(username, password_secret) VALUES ('admin', '25d55ad283aa400af464c76d713c07ad')")
             conn.commit()
         return True
@@ -74,8 +75,19 @@ class DataEngine(object):
     def validate_user(self, username: str, password: str):
         secret = md5(password.encode('utf-8')).hexdigest()
         conn, cur = self._connect_db()
-        cur.execute("SELECT COUNT(*) FROM users WHERE username = ? AND password_secret = ?", (username, secret))
-        return cur.fetchone()[0] == 1
+        session_id = id_generator(32)
+        cur.execute("UPDATE users SET session_id = ? WHERE username = ? AND password_secret = ?", (session_id, username, secret))
+        conn.commit()
+        return session_id if cur.rowcount == 1 else None
+
+    def validate_session(self, session_id):
+        conn, cur = self._connect_db()
+        cur.execute("SELECT username FROM users WHERE session_id = ?", (session_id, ))
+        try:
+            username = cur.fetchone()[0]
+        except IndexError:
+            username == None
+        return username
 
     def change_password(self, username, old_password, new_password):
         secret = md5(old_password.encode('utf-8')).hexdigest()

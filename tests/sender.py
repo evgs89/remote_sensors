@@ -1,6 +1,5 @@
 import socket
-from tests.id_gen import id_generator
-from time import sleep
+from lib.id_gen import id_generator
 
 
 class Sender(object):
