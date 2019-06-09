@@ -64,6 +64,8 @@ class Listener(object):
             id_ = data_list[0]
             text = data_list[1]
             balance = data_list[2] if len(data_list) == 3 else 0
+            try: balance = float(balance)
+            except ValueError: balance = 0
             result = True
             print('RECEIVED MESSAGE:\nID={id}\nDATA={data}\nBALANCE={bal}'.format(id = id_,
                                                                                   data = text,

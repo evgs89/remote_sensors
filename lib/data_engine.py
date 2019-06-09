@@ -139,11 +139,12 @@ class DataEngine(object):
                 if not id_:
                     cur.execute("DELETE FROM messages WHERE received_at = ?", (row[2], ))
                     cur.execute("DELETE FROM last_messages WHERE received_at = ?", (row[2], ))
+                    counter_deleted += 1
                 else:
                     if str(row[0]) == id_:
                         cur.execute("DELETE FROM messages WHERE received_at = ? AND dev_id = ?", (row[2], str(id_)))
                         cur.execute("DELETE FROM last_messages WHERE dev_id = ?", (str(id_), ))
-                counter_deleted += 1
+                        counter_deleted += 1
         conn.commit()
         return counter_deleted
 
