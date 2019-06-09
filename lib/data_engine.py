@@ -95,6 +95,7 @@ class DataEngine(object):
         return data, pages
 
     def get_messages_by_id(self, id_, sort_by = 'received_at', reverse = False, page = 0, page_size = 100):
+        if sort_by not in ['dev_id', 'data', 'balance', 'received_at']: sort_by = 'received_at'
         conn, cur = self._connect_db()
         try:
             cur.execute("SELECT COUNT(*) FROM messages WHERE dev_id = ?", (str(id_), ))

@@ -38,6 +38,7 @@ class test_DataEngine(unittest.TestCase):
         os.remove(dbfile)
 
     def get_all_messages_by_id(self):
+        ## TODO: sorting not tested but implemented
         dbfile = 'test_get_last_messages.sqlite'
         create_test_db(dbfile, 1, 100)
         data_engine = DataEngine(self.host, self.port, dbfile)
