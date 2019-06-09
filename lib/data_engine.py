@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 class DataEngine(object):
     def __init__(self, host, port, db_file = 'db.sqlite'):
-        self.datetime_format = "%d-%m-%Y %H:%M:%S.%f"
+        self.datetime_format = "%Y-%m-%d %H:%M:%S.%f" # it's not familiar for Russia, but sorting would work correctly
         self._db_file = db_file
         self.L = Listener(host, int(port))
         self._db_init()
@@ -18,8 +18,8 @@ class DataEngine(object):
     def _db_init(self):
         if not os.path.isfile(self._db_file):
             conn, cur = self._connect_db()
-            cur.execute("CREATE TABLE last_messages (dev_id TEXT NOT NULL PRIMARY KEY, data TEXT, received_at TEXT, balance TEXT)")
-            cur.execute("CREATE TABLE messages (dev_id TEXT NOT NULL, data TEXT, received_at TEXT)")
+            cur.execute("CREATE TABLE last_messages (dev_id TEXT NOT NULL PRIMARY KEY, data TEXT, balance REAL, received_at TEXT)")
+            cur.execute("CREATE TABLE messages (dev_id TEXT NOT NULL, data TEXT, balance REAL, received_at TEXT)")
             conn.commit()
         return True
 
@@ -34,11 +34,11 @@ class DataEngine(object):
         data = self.L.get_data()
         for message in data:
             try:
-                cur.execute("""INSERT OR REPLACE INTO last_messages(dev_id, data, received_at) 
-                               VALUES (?, ?, ?)""",
-                            (message.id, message.data, message.timestamp.strftime(self.datetime_format)))
-                cur.execute("INSERT INTO messages(dev_id, data, received_at) VALUES (?, ?, ?)",
-                            (message.id, message.data, message.timestamp.strftime(self.datetime_format)))
+                cur.execute("""INSERT OR REPLACE INTO last_messages(dev_id, data, balance, received_at) 
+                               VALUES (?, ?, ?, ?)""",
+                            (message.id, message.data, message.balance, message.timestamp.strftime(self.datetime_format)))
+                cur.execute("INSERT INTO messages(dev_id, data, balance, received_at) VALUES (?, ?, ?, ?)",
+                            (message.id, message.data, message.balance, message.timestamp.strftime(self.datetime_format)))
             except Exception as e:
                 print(e)
                 return False
@@ -72,32 +72,50 @@ class DataEngine(object):
         if self._t:
             return self._t.is_alive()
 
-    def get_last_messages(self):
+    def get_last_messages(self, sort_by = 'received_at', reverse = False, page = 0, page_size = 100):
         conn, cur = self._connect_db()
         try:
-            cur.execute("SELECT dev_id, data, received_at FROM last_messages")
+            cur.execute("SELECT COUNT(*) FROM last_messages")
+            count = cur.fetchone()[0]
+            pages = int(count / page_size) + int(count % page_size != 0)  # get num of pages to show
+            args = (page_size, page_size * (page - 1))
+            cur.execute("""
+            SELECT dev_id, data, balance, received_at 
+            FROM last_messages 
+            ORDER BY {0} {1} 
+            LIMIT ? 
+            OFFSET ?;
+                        """.format(sort_by, 'DESC' if reverse else 'ASC'), args)
         except Exception as e:
             print('DB seems to be corrupted, error is: ', str(e))
         data = []
         rows = cur.fetchall()
         for row in rows:
             data.append(tuple(row))
-        return data
+        return data, pages
 
-    def get_messages_by_id(self, id_, sort_by = None, reverse = False):
+    def get_messages_by_id(self, id_, sort_by = 'received_at', reverse = False, page = 0, page_size = 100):
         conn, cur = self._connect_db()
-        indexes = {'dev_id': 0, 'data': 1, 'received_at': 2, 'balance': 3}
         try:
-            cur.execute("SELECT dev_id, data, received_at FROM messages WHERE dev_id = ?", (str(id_), ))
+            cur.execute("SELECT COUNT(*) FROM messages WHERE dev_id = ?", (str(id_), ))
+            count = cur.fetchone()[0]
+            pages = int(count/page_size) + int(count % page_size != 0) # get num of pages to show
+            cur.execute("""
+                        SELECT dev_id, data, balance, received_at 
+                        FROM messages 
+                        WHERE dev_id = ?
+                        ORDER BY {key} {rev}
+                        LIMIT ?
+                        OFFSET ?; 
+                        """.format(key = sort_by, rev = 'DESC' if reverse else 'ASC'),
+                        (str(id_), page_size, page_size * (page - 1)))
+            rows = cur.fetchall()
+            data = [tuple(row) for row in rows]
+            return data, pages
         except Exception as e:
             print('DB seems to be corrupted, error is: ', str(e))
-        data = []
-        rows = cur.fetchall()
-        for row in rows:
-            data.append(tuple(row))
-        if sort_by:
-            return sorted(data, key = lambda row: row[])
-        return data
+            return [], 0
+
 
     def delete_messages(self,
                         id_ = None,

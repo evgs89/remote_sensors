@@ -63,7 +63,7 @@ class Listener(object):
             data_list = data.split('%%')
             id_ = data_list[0]
             text = data_list[1]
-            balance = data_list[2] if len(data_list) == 3 else None
+            balance = data_list[2] if len(data_list) == 3 else 0
             result = True
             print('RECEIVED MESSAGE:\nID={id}\nDATA={data}\nBALANCE={bal}'.format(id = id_,
                                                                                   data = text,
@@ -72,7 +72,7 @@ class Listener(object):
             print("RECEIVED: ", str(data))
             id_ = 'ERROR'
             text = str(data)
-            balance = None
+            balance = 0
         message = Message(datetime.datetime.now(), id_, text, balance)
         return result, message
 
@@ -105,6 +105,7 @@ class Listener(object):
                     result, message = self._parse_message(data)
                     conn.send(b'\x06' if result else b'\x15')
                     self.queue.put_nowait(message)
+                    sock.shutdown(socket.SHUT_RDWR)
                     sock.close()
                     print("RECEIVED: ", str(data))
             except Exception as e:

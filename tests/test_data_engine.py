@@ -12,7 +12,7 @@ class test_DataEngine(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = ''
-        cls.port = 30111
+        cls.port = 30115
         cls.period = 1
 
     def test_start_stop_sync_loop(self):
