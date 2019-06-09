@@ -4,6 +4,7 @@ import threading
 from lib.listener import Listener
 from time import sleep
 from datetime import datetime, timedelta
+from hashlib import md5
 
 
 class DataEngine(object):
@@ -20,6 +21,8 @@ class DataEngine(object):
             conn, cur = self._connect_db()
             cur.execute("CREATE TABLE last_messages (dev_id TEXT NOT NULL PRIMARY KEY, data TEXT, balance REAL, received_at TEXT)")
             cur.execute("CREATE TABLE messages (dev_id TEXT NOT NULL, data TEXT, balance REAL, received_at TEXT)")
+            cur.execute("CREATE TABLE users (username TEXT NOT NULL PRIMARY KEY, password_secret NOT NULL, last_login TEXT)")
+            cur.execute("INSERT INTO users(username, password_secret) VALUES ('admin', '25d55ad283aa400af464c76d713c07ad')")
             conn.commit()
         return True
 
@@ -67,6 +70,28 @@ class DataEngine(object):
         while self._t.is_alive():
             sleep(.1)
         return True
+
+    def validate_user(self, username: str, password: str):
+        secret = md5(password.encode('utf-8')).hexdigest()
+        conn, cur = self._connect_db()
+        print(username, password)
+        print("SELECT COUNT(*) FROM users WHERE username = {0} AND password_secret = {1}".format(username, secret))
+        cur.execute("SELECT COUNT(*) FROM users WHERE username = ? AND password_secret = ?", (username, secret))
+        return cur.fetchone()[0] == 1
+
+    def change_password(self, username, old_password, new_password):
+        secret = md5(old_password.encode('utf-8')).hexdigest()
+        new_secret = md5(new_password.encode('utf-8')).hexdigest()
+        conn, cur = self._connect_db()
+        cur.execute("UPDATE users SET password_secret = ? WHERE username = ? AND password_secret = ?", (new_secret, username, secret))
+        conn.commit()
+        return cur.rowcount == 1
+
+    def add_user(self, username):
+        conn, cur = self._connect_db()
+        cur.execute("INSERT INTO users(username, password_secret) VALUES (?, '25d55ad283aa400af464c76d713c07ad')", (username, ))
+        conn.commit()
+        return cur.rowcount == 1
 
     def sync_loop_is_alive(self):
         if self._t:
@@ -136,14 +161,16 @@ class DataEngine(object):
         counter_deleted = 0
         for row in rows:
             if datetime.strptime(row[2], self.datetime_format) < date_before:
-                if not id_:
+                if id_ != 0 and not id_:
                     cur.execute("DELETE FROM messages WHERE received_at = ?", (row[2], ))
                     cur.execute("DELETE FROM last_messages WHERE received_at = ?", (row[2], ))
+                    print("old record deleted")
                     counter_deleted += 1
                 else:
-                    if str(row[0]) == id_:
+                    if str(row[0]) == str(id_):
                         cur.execute("DELETE FROM messages WHERE received_at = ? AND dev_id = ?", (row[2], str(id_)))
                         cur.execute("DELETE FROM last_messages WHERE dev_id = ?", (str(id_), ))
+                        print("record by id deleted")
                         counter_deleted += 1
         conn.commit()
         return counter_deleted

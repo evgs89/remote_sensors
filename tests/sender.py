@@ -19,8 +19,11 @@ class Sender(object):
             sock = socket.socket()
             sock.connect((self.host, self.port))
             sock.send(text)
-            reply = sock.recv(1024)
-            assert (reply == b'\x06' or reply == b'\x15')
+            try:
+                reply = sock.recv(1024)
+                assert (reply == b'\x06' or reply == b'\x15')
+            except:
+                reply = None
             sock.close()
             return text.decode('ascii'), reply
         except ConnectionRefusedError:

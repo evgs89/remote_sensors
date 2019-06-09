@@ -12,7 +12,7 @@ class test_DataEngine(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = ''
-        cls.port = 30115
+        cls.port = 30118
         cls.period = 1
 
     def test_start_stop_sync_loop(self):
@@ -27,47 +27,75 @@ class test_DataEngine(unittest.TestCase):
         self.assertTrue(data_engine.stop_sync_loop())
         os.remove(dbfile)
 
-    def get_last_messages(self):
+    def test_get_last_messages(self):
         dbfile = 'test_get_last_messages.sqlite'
         create_test_db(dbfile, 10, 100)
         data_engine = DataEngine(self.host, self.port, dbfile)
-        data = data_engine.get_last_messages()
+        data, pages = data_engine.get_last_messages()
         self.assertTrue(len(data) > 0)
         self.assertIsInstance(data[0], tuple)
         self.assertIsInstance(data[0][1], str)
         os.remove(dbfile)
 
-    def get_all_messages_by_id(self):
+    def test_get_all_messages_by_id(self):
         ## TODO: sorting not tested but implemented
-        dbfile = 'test_get_last_messages.sqlite'
+        dbfile = 'test_get_messages_id.sqlite'
         create_test_db(dbfile, 1, 100)
         data_engine = DataEngine(self.host, self.port, dbfile)
-        data = data_engine.get_messages_by_id(0)
+        data, pages = data_engine.get_messages_by_id(0)
         self.assertEqual(100, len(data))
         self.assertIsInstance(data[0], tuple)
         self.assertEqual('0', data[0][0])
         self.assertIsInstance(data[0][1], str)
         os.remove(dbfile)
 
-    def delete_messages(self):
+    def test_delete_messages(self):
         dbfile = 'test_delete_messages.sqlite'
         create_test_db(dbfile, 1, 100)
         data_engine = DataEngine(self.host, self.port, dbfile)
-        data = data_engine.get_messages_by_id(0)
+        data, pages = data_engine.get_messages_by_id(0)
         date_before = datetime.now() - timedelta(days = 2)
         self.assertEqual(100, len(data))
         counter = 0
         for row in data:
-            if row[2].strptime(data_engine.datetime_format) < date_before: counter += 1
+            if datetime.strptime(row[3], data_engine.datetime_format) < date_before: counter += 1
         deleted = data_engine.delete_messages(date_before = date_before)
         self.assertEqual(counter, deleted)
         os.remove(dbfile)
         dbfile = 'test_delete_messages.sqlite'
         create_test_db(dbfile, 2, 100)
-        data = data_engine.get_messages_by_id(0)
+        data, pages = data_engine.get_messages_by_id(0)
+        counter = 0
+        for row in data:
+            if row[0] == '0': counter += 1
         deleted = data_engine.delete_messages(id_ = 0)
-        self.assertEqual(len(data), deleted)
+        self.assertEqual(counter, deleted)
         os.remove(dbfile)
 
+    def test_validate_user(self):
+        dbfile = 'test_users.sqlite'
+        create_test_db(dbfile, 1, 100)
+        data_engine = DataEngine(self.host, self.port, dbfile)
+        self.assertTrue(data_engine.validate_user('admin', '12345678'))
+        self.assertFalse(data_engine.validate_user('admin', '1234567890'))
+        os.remove(dbfile)
+
+    def test_change_password(self):
+        dbfile = 'test_users_chpwd.sqlite'
+        create_test_db(dbfile, 1, 100)
+        data_engine = DataEngine(self.host, self.port, dbfile)
+        self.assertTrue(data_engine.validate_user('admin', '12345678'))
+        self.assertTrue(data_engine.change_password('admin', '12345678', '87654321'))
+        self.assertTrue(data_engine.validate_user('admin', '87654321'))
+        self.assertFalse(data_engine.change_password('admin', '12345678', '87654321'))
+        os.remove(dbfile)
+
+    def test_create_user(self):
+        dbfile = 'test_users_create.sqlite'
+        create_test_db(dbfile, 1, 100)
+        data_engine = DataEngine(self.host, self.port, dbfile)
+        self.assertTrue(data_engine.add_user('testuser'))
+        self.assertTrue(data_engine.validate_user('testuser', '12345678'))
+        os.remove(dbfile)
 
 

@@ -9,7 +9,7 @@ class test_Listener(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = ''
-        cls.port = 30116
+        cls.port = 30117
 
     def test_start_stop(self):
         L = Listener(self.host, self.port)

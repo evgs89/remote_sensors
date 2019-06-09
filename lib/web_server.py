@@ -9,14 +9,14 @@ class WebInterface(object):
         conf = configparser.ConfigParser(allow_no_value = True)
         conf.read('settings.ini')
         self.settings = conf['socket']
-        web_settings = conf['web_server']
+        self.web_settings = conf['web_server']
         self.page_size = 30
         self.db_engine = DataEngine(self.settings['host'],
                                     self.settings['port'],)
         self.db_engine.start_sync_loop(self.settings['db_update_period'])
         self.bound_bottle()
         try:
-            run(host = web_settings['host'], port = int(web_settings['port']))
+            run(host = self.web_settings['host'], port = int(self.web_settings['port']))
         except OSError as e:
             print(e)
 
