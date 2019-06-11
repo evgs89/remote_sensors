@@ -20,10 +20,14 @@ class DataEngine(object):
     def _db_init(self):
         if not os.path.isfile(self._db_file):
             conn, cur = self._connect_db()
-            cur.execute("CREATE TABLE last_messages (dev_id TEXT NOT NULL PRIMARY KEY, data TEXT, balance REAL, received_at TEXT)")
+            cur.execute("CREATE TABLE last_messages "
+                        "(dev_id TEXT NOT NULL PRIMARY KEY, data TEXT, balance REAL, received_at TEXT)")
             cur.execute("CREATE TABLE messages (dev_id TEXT NOT NULL, data TEXT, balance REAL, received_at TEXT)")
-            cur.execute("CREATE TABLE users (username TEXT NOT NULL PRIMARY KEY, password_secret NOT NULL, last_login TEXT, session_id TEXT)")
-            cur.execute("INSERT INTO users(username, password_secret) VALUES ('admin', '25d55ad283aa400af464c76d713c07ad')")
+            cur.execute("CREATE TABLE users "
+                        "(username TEXT NOT NULL PRIMARY KEY, password_secret NOT NULL, "
+                        "last_login TEXT, session_id TEXT)")
+            cur.execute("INSERT INTO users(username, password_secret) "
+                        "VALUES ('admin', '25d55ad283aa400af464c76d713c07ad')")
             conn.commit()
         return True
 
@@ -72,36 +76,65 @@ class DataEngine(object):
             sleep(.1)
         return True
 
-    def validate_user(self, username: str, password: str):
-        secret = md5(password.encode('utf-8')).hexdigest()
+    def validate_user(self, username: str, password, new_session = True):
+        secret = md5(str(password).encode('utf-8')).hexdigest()
         conn, cur = self._connect_db()
         session_id = id_generator(32)
-        cur.execute("UPDATE users SET session_id = ? WHERE username = ? AND password_secret = ?", (session_id, username, secret))
-        conn.commit()
-        return session_id if cur.rowcount == 1 else None
+        if new_session:
+            cur.execute("UPDATE users SET session_id = ? "
+                        "WHERE username = ? AND password_secret = ?", (session_id, username, secret))
+            conn.commit()
+            return session_id if cur.rowcount == 1 else None
+        else:
+            cur.execute("SELECT session_id FROM users WHERE username = ? AND password_secret = ?", (username, secret))
+            try:
+                return cur.fetchone()[0]
+            except TypeError:
+                return None
 
     def validate_session(self, session_id):
         conn, cur = self._connect_db()
-        cur.execute("SELECT username FROM users WHERE session_id = ?", (session_id, ))
         try:
-            username = cur.fetchone()[0]
+            cur.execute("SELECT username FROM users WHERE session_id = ?", (session_id, ))
         except IndexError:
-            username == None
-        return username
+            return None
+        try:
+            return cur.fetchone()[0]
+        except TypeError:
+            return None
+
+    def get_user_list(self):
+        conn, cur = self._connect_db()
+        cur.execute("SELECT username FROM users")
+        rows = cur.fetchall()
+        return [row[0] for row in rows]
 
     def change_password(self, username, old_password, new_password):
-        secret = md5(old_password.encode('utf-8')).hexdigest()
-        new_secret = md5(new_password.encode('utf-8')).hexdigest()
+        secret = md5(str(old_password).encode('utf-8')).hexdigest()
+        new_secret = md5(str(new_password).encode('utf-8')).hexdigest()
         conn, cur = self._connect_db()
-        cur.execute("UPDATE users SET password_secret = ? WHERE username = ? AND password_secret = ?", (new_secret, username, secret))
+        cur.execute("UPDATE users SET password_secret = ? WHERE username = ? AND password_secret = ?", (new_secret,
+                                                                                                        username,
+                                                                                                        secret))
         conn.commit()
         return cur.rowcount == 1
 
     def add_user(self, username):
         conn, cur = self._connect_db()
-        cur.execute("INSERT INTO users(username, password_secret) VALUES (?, '25d55ad283aa400af464c76d713c07ad')", (username, ))
+        cur.execute("INSERT INTO users(username, password_secret) "
+                    "VALUES (?, '25d55ad283aa400af464c76d713c07ad')", (username, ))
         conn.commit()
         return cur.rowcount == 1
+
+    def delete_user(self, username, password, username_delete):
+        if self.validate_user(username, password, new_session = False):
+            conn, cur = self._connect_db()
+            cur.execute("DELETE FROM users WHERE username = ?", (username_delete, ))
+            conn.commit()
+            return True
+        else:
+            print('user not allowed to delete users')
+            return False
 
     def sync_loop_is_alive(self):
         if self._t:

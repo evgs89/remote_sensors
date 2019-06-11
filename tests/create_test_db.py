@@ -9,7 +9,7 @@ def create_test_db(filename, ids, messages):
     cur.execute(
         "CREATE TABLE last_messages (dev_id TEXT NOT NULL PRIMARY KEY, data TEXT, balance REAL, received_at TEXT)")
     cur.execute("CREATE TABLE messages (dev_id TEXT NOT NULL, data TEXT, balance REAL, received_at TEXT)")
-    cur.execute("CREATE TABLE users (username TEXT NOT NULL PRIMARY KEY, password_secret NOT NULL, last_login TEXT)")
+    cur.execute("CREATE TABLE users (username TEXT NOT NULL PRIMARY KEY, password_secret NOT NULL, last_login TEXT, session_id TEXT)")
     cur.execute("INSERT INTO users(username, password_secret) VALUES ('admin', '25d55ad283aa400af464c76d713c07ad')")
     conn.commit()
     id_list = [str(i) for i in range(ids)]
