@@ -1,10 +1,10 @@
 % rebase('base.tpl', user = user, result = result)
 % if result == 'created':
-    <div>Пользователь создан.</div>
+    <div class="container">Пользователь создан.</div>
 % elif result == 'error':
-    <div>Ошибка создания пользователя</div>
+    <div class="container">Ошибка создания пользователя</div>
 % elif result == 'duplicate':
-    <div>Данное имя пользователя уже используется</div>
+    <div class="container">Данное имя пользователя уже используется</div>
 % end
 <form action="/settings/useradd" method="post">
     Username: <input name="username" type="text" /><br>
