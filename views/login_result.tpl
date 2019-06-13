@@ -1,8 +1,13 @@
 % rebase('base.tpl', user = user)
 % if user:
-<div>You successfully logged in</div>
+<div>
+    <h1 class="mt-5">Вы успешно авторизовались</h1>
+    <a href="/" class="btn btn-primary my-2">На главную страницу</a>
+</div>
 % else:
-<div>You are not authorised</div><br>
-<div><a href="/login">Log in</a></div>
+<div>
+    <h1 class="mt-5">Вы не вошли в систему</h1>
+    <a href="/login" class="btn btn-primary my-2">Авторизоваться</a>
+    <a href="/" class="btn btn-secondary my-2">На главную страницу</a>
+</div>
 % end
-<div><a href="/">Back to main page</a></div>

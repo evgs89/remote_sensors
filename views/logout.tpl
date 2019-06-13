@@ -1,13 +1,14 @@
 % rebase('base.tpl', user = user)
-<header>Выход из системы</header>
 % if user:
 <div>
-    Уверены, что хотите выйти?<br>
-    <a href="/logout?accepted=1">Да</a><a href="/">Нет</a>
+    <h1 class="mt-5">Уверены, что хотите выйти?</h1>
+    <a href="/" class="btn btn-primary my-2">Нет</a>
+    <a href="/logout?accepted=1" class="btn btn-secondary my-2">Да</a>
 </div>
 % else:
 <div>
-    <b>Вы не вошли в систему</b><br>
-    <a href="/login">Авторизоваться</a><a href="/">На главную</a>
+    <h1 class="mt-5">Вы не вошли в систему</h1>
+    <a href="/login" class="btn btn-primary my-2">Авторизоваться</a>
+    <a href="/" class="btn btn-secondary my-2">На главную страницу</a>
 </div>
 % end
