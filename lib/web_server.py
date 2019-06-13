@@ -2,7 +2,7 @@ import configparser
 import os
 from time import sleep
 
-from lib.bottle import route, run, post, request, view, template, abort, response, redirect
+from lib.bottle import route, run, post, request, view, template, abort, response, redirect, static_file
 from lib.data_engine import DataEngine
 from datetime import datetime, timedelta
 import sqlite3
@@ -42,6 +42,7 @@ class WebInterface(object):
         route('/settings/userdel')(self.userdel)
         post('/settings/userdel')(self.do_userdel)
         route('/settings/reboot')(self.reboot)
+        route('/static/<filename>')(self.server_static)
 
     def _check_cookie(self):
         session_id = request.get_cookie('session_id')
@@ -51,6 +52,9 @@ class WebInterface(object):
                 response.set_cookie('session_id', session_id,
                                     expires = datetime.now() +
                                     timedelta(days = int(self.web_settings['session_expire_days'])))
+
+    def server_static(self, filename):
+        return static_file(filename, root = './static')
 
     @view('index')
     def last_messages(self):
@@ -208,5 +212,5 @@ class WebInterface(object):
         if self.user:
             if accepted:
                 sleep(.1)
-                os.popen('reboot')
+                os.popen('sudo reboot')
             return dict(user = self.user, accepted = accepted)

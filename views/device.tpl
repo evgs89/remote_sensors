@@ -1,4 +1,5 @@
 % rebase('base.tpl', page_info = page_info, data = data, user = user)
+<link href="https://getbootstrap.com/docs/4.3/examples/blog/blog.css" rel="stylesheet">
 <h1 class="mt-5">Данные от отправителя: {{page_info['id']}}</h1>
 <div class="table-responsive">
         <table class="table table-striped table-sm">
