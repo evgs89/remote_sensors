@@ -91,10 +91,7 @@ class DataEngine(object):
             return session_id if cur.rowcount == 1 else None
         else:
             cur.execute("SELECT session_id FROM users WHERE username = ? AND password_secret = ?", (username, secret))
-            try:
-                return cur.fetchone()[0]
-            except TypeError:
-                return None
+            return len(cur.fetchall()) > 0
 
     def validate_session(self, session_id):
         conn, cur = self._connect_db()
@@ -213,13 +210,11 @@ class DataEngine(object):
                 if id_ != 0 and not id_:
                     cur.execute("DELETE FROM messages WHERE received_at = ?", (row[2], ))
                     cur.execute("DELETE FROM last_messages WHERE received_at = ?", (row[2], ))
-                    print("old record deleted")
                     counter_deleted += 1
                 else:
                     if str(row[0]) == str(id_):
                         cur.execute("DELETE FROM messages WHERE received_at = ? AND dev_id = ?", (row[2], str(id_)))
                         cur.execute("DELETE FROM last_messages WHERE dev_id = ?", (str(id_), ))
-                        print("record by id deleted")
                         counter_deleted += 1
         conn.commit()
         return counter_deleted
@@ -240,7 +235,7 @@ class DataEngine(object):
                 cur.execute("INSERT OR REPLACE INTO mixed (key, value) VALUES ('last_clean', ?)",
                             (datetime.now().strftime(self.datetime_format), ))
             conn.commit()
-        t = threading.Thread(target = delete)
+        t = threading.Thread(target = delete, args = (self, ))
         t.daemon = True
         t.start()
 

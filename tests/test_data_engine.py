@@ -35,6 +35,7 @@ class test_DataEngine(unittest.TestCase):
         self.assertTrue(len(data) > 0)
         self.assertIsInstance(data[0], tuple)
         self.assertIsInstance(data[0][1], str)
+        sleep(2)
         os.remove(dbfile)
 
     def test_get_all_messages_by_id(self):
@@ -62,14 +63,16 @@ class test_DataEngine(unittest.TestCase):
         deleted = data_engine.delete_messages(date_before = date_before)
         self.assertEqual(counter, deleted)
         dbfile2 = 'test_delete_old_messages.sqlite'
-        create_test_db(dbfile, 2, 100)
+        create_test_db(dbfile2, 2, 100)
+        data_engine = DataEngine(self.host, self.port, dbfile2)
         data, pages = data_engine.get_messages_by_id(0)
         counter = 0
         for row in data:
             if row[0] == '0': counter += 1
         deleted = data_engine.delete_messages(id_ = 0)
         self.assertEqual(counter, deleted)
-        os.remove(dbfile, dbfile2)
+        os.remove(dbfile)
+        os.remove(dbfile2)
 
     def test_autoclean_old_messages(self):
         dbfile = 'test_auto_delete_old_messages.sqlite'
