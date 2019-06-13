@@ -9,7 +9,7 @@ class test_Listener(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = ''
-        cls.port = 30117
+        cls.port = 30111
 
     def test_start_stop(self):
         L = Listener(self.host, self.port)
@@ -29,8 +29,7 @@ class test_Listener(unittest.TestCase):
         for id_ in range(5):
             for balance in [None, 1, 2, 3]:
                 s = Sender(id_, self.host, self.port)
-                text, reply = s.send(balance = balance)
-                self.assertEqual(b'\x06', reply)
+                text = s.send(balance = balance)
                 listened = get_data_now(L)[0]
                 if balance:
                     self.assertEqual(text, "{id}%%{data}%%{balance}".format(id = listened.id,

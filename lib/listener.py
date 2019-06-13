@@ -1,60 +1,29 @@
-import socket
 import datetime
-import threading, queue
+import threading
+import queue
+import socket
+from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
 from collections import namedtuple
-from time import sleep
 
 
 Message = namedtuple('Message', 'timestamp, id, data, balance')
 
 
-class Listener(object):
-    def __init__(self, host = '', port = 30110):
-        self.port = port
-        self.host = host
-        self.data_block_size = 1024
-        self._listener_active = False
-        self.t = None
-        self.queue = queue.Queue()
-
-    def start(self):
-        if self.is_active(): self.stop()
-        self._listener_active = True
-        self.t = threading.Thread(target = self._main_loop, args = ())
-        self.t.start()
-        return self.is_active()
-
-    def stop(self):
-        self._listener_active = False
-        while self.t.is_alive():
-            # Loop hangs on sock.accept while there is no connection, so we'll create connection manually
-            sock2 = socket.socket()
+class MyTCPHandler(BaseRequestHandler):
+    def handle(self):
+        self.request.settimeout(5)
+        data = bytearray()
+        print("DEBUG: HANDLE")
+        while True:
             try:
-                sock2.connect((self.host, self.port))
-                sock2.send(b'\x06')
-            except ConnectionRefusedError:
-                pass
-            sock2.close()
-            sleep(.1)
-        return True
-
-    def get_data(self):
-        """
-        Get all received data
-        """
-        data = []
-        try:
-            while not self.queue.empty():
-                data.append(self.queue.get_nowait())
-        except queue.Empty:
-            pass
-        return data
-
-    def is_active(self):
-        try:
-            return self.t.is_alive()
-        except AttributeError:
-            return False
+                chunk = self.request.recv(1024)
+                data += chunk
+            except socket.timeout:
+                print("timeout")
+                break
+            if not chunk: break
+        result, message = self._parse_message(data)
+        self.server.queue.put_nowait(message)
 
     def _parse_message(self, data):
         data = data.decode(encoding = 'ascii')
@@ -78,38 +47,53 @@ class Listener(object):
         message = Message(datetime.datetime.now(), id_, text, balance)
         return result, message
 
-    def _create_socket(self):
-        print("CREATE SOCKET")
-        sock = socket.socket()
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        try:
-            sock.bind((self.host, self.port))
-            print("BIND OK")
-        except OSError as msg:
-            sock.close()
-            print("OS ERROR: ", msg)
-            return False
-        sock.listen(1)
-        conn, addr = sock.accept()
-        print("CLIENT CONNECTED")
-        return sock, conn, addr
 
-    def _main_loop(self):
-        while self._listener_active:
-            try:
-                sock, conn, addr = self._create_socket()
-                data = conn.recv(self.data_block_size)
-                if data == b'\x06':
-                    conn.send(b'\x06')
-                    print("EOT")
-                    sock.close()
-                elif data:
-                    result, message = self._parse_message(data)
-                    conn.send(b'\x06' if result else b'\x15')
-                    self.queue.put_nowait(message)
-                    sock.shutdown(socket.SHUT_RDWR)
-                    sock.close()
-                    print("RECEIVED: ", str(data))
-            except Exception as e:
-                print(str(e))
+class ThreadedServer(ThreadingMixIn, TCPServer):
+    pass
+
+
+class Listener(object):
+    def __init__(self, host = '', port = 30110):
+        self.port = port
+        self.host = host
+        self.data_block_size = 1024
+        self.t = None
+        self.queue = queue.Queue()
+        self.server = None
+
+    def start(self):
+        if self.is_active():
+            self.stop()
+        TCPServer.allow_reuse_address = True
+        self.server = TCPServer((self.host, self.port), MyTCPHandler)
+        self.server.queue = self.queue
+        self.t = threading.Thread(target = self.server.serve_forever)
+        self.t.daemon = True
+        self.t.start()
+        return self.is_active()
+
+    def stop(self):
+        self.server.shutdown()
+        return True
+
+    def get_data(self):
+        """
+        Get all received data
+        """
+        data = []
+        try:
+            while not self.queue.empty():
+                data.append(self.queue.get_nowait())
+        except queue.Empty:
+            pass
+        return data
+
+    def is_active(self):
+        try:
+            return self.t.is_alive()
+        except AttributeError:
+            return False
+
+    def _start_server(self):
+        self.server.serve_forever()
 

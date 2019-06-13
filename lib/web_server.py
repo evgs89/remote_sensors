@@ -25,7 +25,6 @@ class WebInterface(object):
         except OSError as e:
             print(e)
 
-
     def bound_bottle(self):
         route('/')(self.last_messages)
         route('/device/<dev_id>')(self.messages_by_id)

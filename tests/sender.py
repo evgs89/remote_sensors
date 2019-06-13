@@ -18,13 +18,8 @@ class Sender(object):
             sock = socket.socket()
             sock.connect((self.host, self.port))
             sock.send(text)
-            try:
-                reply = sock.recv(1024)
-                assert (reply == b'\x06' or reply == b'\x15')
-            except:
-                reply = None
             sock.close()
-            return text.decode('ascii'), reply
+            return text.decode('ascii')
         except ConnectionRefusedError:
             print('Socket {host}:{port} is inactive or busy'.format(host = self.host, port = self.port))
             return text, None

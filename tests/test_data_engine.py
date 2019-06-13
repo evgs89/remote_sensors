@@ -12,7 +12,7 @@ class test_DataEngine(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = ''
-        cls.port = 30118
+        cls.port = 30112
         cls.period = 1
 
     def test_start_stop_sync_loop(self):
@@ -61,8 +61,7 @@ class test_DataEngine(unittest.TestCase):
             if datetime.strptime(row[3], data_engine.datetime_format) < date_before: counter += 1
         deleted = data_engine.delete_messages(date_before = date_before)
         self.assertEqual(counter, deleted)
-        os.remove(dbfile)
-        dbfile = 'test_delete_messages.sqlite'
+        dbfile2 = 'test_delete_old_messages.sqlite'
         create_test_db(dbfile, 2, 100)
         data, pages = data_engine.get_messages_by_id(0)
         counter = 0
@@ -70,6 +69,23 @@ class test_DataEngine(unittest.TestCase):
             if row[0] == '0': counter += 1
         deleted = data_engine.delete_messages(id_ = 0)
         self.assertEqual(counter, deleted)
+        os.remove(dbfile, dbfile2)
+
+    def test_autoclean_old_messages(self):
+        dbfile = 'test_auto_delete_old_messages.sqlite'
+        create_test_db(dbfile, 1, 100)
+        data_engine = DataEngine(self.host, self.port, dbfile, 2)
+        data, pages = data_engine.get_messages_by_id(0)
+        date_before = datetime.now() - timedelta(days = 2)
+        counter = 0
+        for row in data:
+            if datetime.strptime(row[3], data_engine.datetime_format) < date_before: counter += 1
+        records = len(data)
+        data_engine.get_last_messages()
+        sleep(2)
+        data, pages = data_engine.get_messages_by_id(0)
+        fresh = len(data)
+        self.assertTrue(records == fresh + counter)
         os.remove(dbfile)
 
     def test_validate_user(self):
@@ -78,6 +94,14 @@ class test_DataEngine(unittest.TestCase):
         data_engine = DataEngine(self.host, self.port, dbfile)
         self.assertTrue(data_engine.validate_user('admin', '12345678'))
         self.assertFalse(data_engine.validate_user('admin', '1234567890'))
+        os.remove(dbfile)
+
+    def test_validate_session(self):
+        dbfile = 'test_users_session.sqlite'
+        create_test_db(dbfile, 1, 100)
+        data_engine = DataEngine(self.host, self.port, dbfile)
+        session_id = data_engine.validate_user('admin', '12345678')
+        self.assertTrue(data_engine.validate_session(session_id))
         os.remove(dbfile)
 
     def test_change_password(self):
@@ -96,6 +120,26 @@ class test_DataEngine(unittest.TestCase):
         data_engine = DataEngine(self.host, self.port, dbfile)
         self.assertTrue(data_engine.add_user('testuser'))
         self.assertTrue(data_engine.validate_user('testuser', '12345678'))
+        os.remove(dbfile)
+
+    def test_get_user_list(self):
+        dbfile = 'test_users_getlist.sqlite'
+        create_test_db(dbfile, 1, 100)
+        data_engine = DataEngine(self.host, self.port, dbfile)
+        self.assertTrue(data_engine.add_user('testuser1'))
+        self.assertTrue(data_engine.add_user('testuser2'))
+        lst = data_engine.get_user_list()
+        self.assertEqual(3, len(lst))
+        self.assertTrue('testuser1' in lst)
+        os.remove(dbfile)
+
+    def test_delete_user(self):
+        dbfile = 'test_users_delete.sqlite'
+        create_test_db(dbfile, 1, 100)
+        data_engine = DataEngine(self.host, self.port, dbfile)
+        self.assertTrue(data_engine.add_user('testuser1'))
+        self.assertTrue(data_engine.delete_user('admin', '12345678', 'testuser1'))
+        self.assertEqual(1, len(data_engine.get_user_list()))
         os.remove(dbfile)
 
 
