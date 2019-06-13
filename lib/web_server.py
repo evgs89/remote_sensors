@@ -15,7 +15,7 @@ class WebInterface(object):
         self.user = None
         self.settings = conf['socket']
         self.web_settings = conf['web_server']
-        self.page_size = 30
+        self.page_size = int(self.web_settings['page_size'])
         self.db_engine = DataEngine(self.settings['host'],
                                     self.settings['port'],)
         self.db_engine.start_sync_loop(self.settings['db_update_period'])
@@ -59,8 +59,15 @@ class WebInterface(object):
     @view('index')
     def last_messages(self):
         self._check_cookie()
-        messages, pages = self.db_engine.get_last_messages()
-        return dict(rows = messages, user = self.user)
+        sort_by = request.query.sort_by or 'received_at'
+        page = int(request.query.page or 1)
+        reverse = bool(int(request.query.reverse or 0))
+        messages, pages = self.db_engine.get_last_messages(sort_by = sort_by,
+                                                           reverse = reverse,
+                                                           page = page,
+                                                           page_size = self.page_size)
+        page_info = {'sort_by': sort_by, 'page': page, 'reverse': reverse, 'pages': pages}
+        return dict(rows = messages, page_info = page_info, user = self.user)
 
     @view('device')
     def messages_by_id(self, dev_id):
