@@ -2,7 +2,7 @@ import configparser
 import os
 from time import sleep
 
-from lib.bottle import route, run, post, request, view, template, abort, response, redirect
+from lib.bottle import route, run, post, request, view, template, abort, response, redirect, static_file
 from lib.data_engine import DataEngine
 from datetime import datetime, timedelta
 import sqlite3
@@ -15,7 +15,7 @@ class WebInterface(object):
         self.user = None
         self.settings = conf['socket']
         self.web_settings = conf['web_server']
-        self.page_size = 30
+        self.page_size = int(self.web_settings['page_size'])
         self.db_engine = DataEngine(self.settings['host'],
                                     self.settings['port'],)
         self.db_engine.start_sync_loop(self.settings['db_update_period'])
@@ -24,7 +24,6 @@ class WebInterface(object):
             run(host = self.web_settings['host'], port = int(self.web_settings['port']))
         except OSError as e:
             print(e)
-
 
     def bound_bottle(self):
         route('/')(self.last_messages)
@@ -43,6 +42,7 @@ class WebInterface(object):
         route('/settings/userdel')(self.userdel)
         post('/settings/userdel')(self.do_userdel)
         route('/settings/reboot')(self.reboot)
+        route('/static/<filename>')(self.server_static)
 
     def _check_cookie(self):
         session_id = request.get_cookie('session_id')
@@ -53,11 +53,21 @@ class WebInterface(object):
                                     expires = datetime.now() +
                                     timedelta(days = int(self.web_settings['session_expire_days'])))
 
+    def server_static(self, filename):
+        return static_file(filename, root = './static')
+
     @view('index')
     def last_messages(self):
         self._check_cookie()
-        messages, pages = self.db_engine.get_last_messages()
-        return dict(rows = messages, user = self.user)
+        sort_by = request.query.sort_by or 'received_at'
+        page = int(request.query.page or 1)
+        reverse = bool(int(request.query.reverse or 0))
+        messages, pages = self.db_engine.get_last_messages(sort_by = sort_by,
+                                                           reverse = reverse,
+                                                           page = page,
+                                                           page_size = self.page_size)
+        page_info = {'sort_by': sort_by, 'page': page, 'reverse': reverse, 'pages': pages}
+        return dict(rows = messages, page_info = page_info, user = self.user)
 
     @view('device')
     def messages_by_id(self, dev_id):
@@ -209,5 +219,5 @@ class WebInterface(object):
         if self.user:
             if accepted:
                 sleep(.1)
-                os.popen('reboot')
+                os.popen('sudo reboot')
             return dict(user = self.user, accepted = accepted)

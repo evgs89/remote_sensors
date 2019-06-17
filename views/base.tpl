@@ -1,3 +1,6 @@
+% from lib.bottle import template
+% setdefault('footer', False)
+% setdefault('page', 'index')
 <!DOCTYPE html>
 <html>
     <head>
@@ -30,21 +33,17 @@
     <link href="https://getbootstrap.com/docs/4.3/examples/sticky-footer-navbar/sticky-footer-navbar.css" rel="stylesheet">
        <!-- <link href="https://getbootstrap.com/docs/4.3/examples/sign-in/signin.css" rel="stylesheet"> -->
     </head>
-    <body class="d-flex flex-column h-100">
-        % include('header.tpl', user = user)
+    <body class="d-flex flex-column">
+        % include('header.tpl', user = user, page = page)
 <main role="main" class="flex-shrink-0">
-    <div class="container">
+    <div class="container h-100">
         {{!base}}
     </div>
-    <div class="container">
-        % include('footer.tpl')
-    </div>
 </main>
-
-
-
+% if footer:
+    % include('footer.tpl')
+% end
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script>window.jQuery || document.write('<script src="https://getbootstrap.com/docs/4.3/assets/js/vendor/jquery-slim.min.js"><\/script>')</script><script src="https://getbootstrap.com/docs/4.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o" crossorigin="anonymous"></script>
-
-    </body>
+</body>
 </html>

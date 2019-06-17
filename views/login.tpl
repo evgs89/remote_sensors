@@ -1,4 +1,4 @@
-% rebase('base.tpl', user = user)
+% rebase('base.tpl', user = user, page = 'login')
 <link href="https://getbootstrap.com/docs/4.3/examples/sign-in/signin.css" rel="stylesheet">
 <form action="/login" method="post" class="form-signin">
   <h1 class="h3 mb-3 font-weight-normal">Введите Ваши данные</h1>

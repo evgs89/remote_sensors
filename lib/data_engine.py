@@ -9,9 +9,10 @@ from hashlib import md5
 
 
 class DataEngine(object):
-    def __init__(self, host, port, db_file = 'db.sqlite'):
-        self.datetime_format = "%Y-%m-%d %H:%M:%S.%f" # it's not familiar for Russia, but sorting would work correctly
+    def __init__(self, host, port, db_file = 'db.sqlite', db_autoclean_days = 60):
+        self.datetime_format = "%Y-%m-%d %H:%M:%S.%f"  # it's not familiar for Russia, but sorting would work correctly
         self._db_file = db_file
+        self.db_autoclean_days = db_autoclean_days
         self.L = Listener(host, int(port))
         self._db_init()
         self._t = None
@@ -28,6 +29,9 @@ class DataEngine(object):
                         "last_login TEXT, session_id TEXT)")
             cur.execute("INSERT INTO users(username, password_secret) "
                         "VALUES ('admin', '25d55ad283aa400af464c76d713c07ad')")
+            cur.execute("CREATE TABLE mixed (key TEXT NOT NULL PRIMARY KEY, value TEXT)")
+            cur.execute("INSERT INTO mixed(key, value) VALUES ('last_clean', ?)",
+                        (datetime.now().strftime(self.datetime_format), ))
             conn.commit()
         return True
 
@@ -87,10 +91,7 @@ class DataEngine(object):
             return session_id if cur.rowcount == 1 else None
         else:
             cur.execute("SELECT session_id FROM users WHERE username = ? AND password_secret = ?", (username, secret))
-            try:
-                return cur.fetchone()[0]
-            except TypeError:
-                return None
+            return len(cur.fetchall()) > 0
 
     def validate_session(self, session_id):
         conn, cur = self._connect_db()
@@ -141,6 +142,7 @@ class DataEngine(object):
             return self._t.is_alive()
 
     def get_last_messages(self, sort_by = 'received_at', reverse = False, page = 0, page_size = 100):
+        self._delete_old_messages()
         conn, cur = self._connect_db()
         try:
             cur.execute("SELECT COUNT(*) FROM last_messages")
@@ -208,16 +210,38 @@ class DataEngine(object):
                 if id_ != 0 and not id_:
                     cur.execute("DELETE FROM messages WHERE received_at = ?", (row[2], ))
                     cur.execute("DELETE FROM last_messages WHERE received_at = ?", (row[2], ))
-                    print("old record deleted")
                     counter_deleted += 1
                 else:
                     if str(row[0]) == str(id_):
                         cur.execute("DELETE FROM messages WHERE received_at = ? AND dev_id = ?", (row[2], str(id_)))
                         cur.execute("DELETE FROM last_messages WHERE dev_id = ?", (str(id_), ))
-                        print("record by id deleted")
                         counter_deleted += 1
         conn.commit()
         return counter_deleted
+
+    def _delete_old_messages(self):
+        def delete(self):
+            conn, cur = self._connect_db()
+            cur.execute("SELECT value FROM mixed WHERE key = 'last_clean'")
+            try:
+                last_clean_date = cur.fetchone()[0]
+                last_clean_date = datetime.strptime(last_clean_date, self.datetime_format)
+                need_cleaning = (datetime.now() - last_clean_date).days > self.db_autoclean_days
+            except TypeError:
+                need_cleaning = True
+            if need_cleaning:
+                date_before = datetime.now() - timedelta(days=self.db_autoclean_days)
+                self.delete_messages(date_before = date_before)
+                cur.execute("INSERT OR REPLACE INTO mixed (key, value) VALUES ('last_clean', ?)",
+                            (datetime.now().strftime(self.datetime_format), ))
+            conn.commit()
+        t = threading.Thread(target = delete, args = (self, ))
+        t.daemon = True
+        t.start()
+
+
+
+
 
 
 

@@ -1,16 +1,26 @@
-% rebase('base.tpl', user = user, settings = settings)
+% rebase('base.tpl', user = user, settings = settings, footer = True, page = 'settings')
 <div>
     <form action="/settings" method="post">
-        Время хранения данных (дней): <input name="store_days" type="text" value="{{settings['db_settings']['store_days']}}" /><br>
-        Порт доступности веб-интерфейса <input name="port" type="text" value="{{settings['web_server']['port']}}"/><br>
-        Время авторизованной сессии (дней) <input name="session_expire_days" type="text" value="{{settings['web_server']['session_expire_days']}}"/><br>
-        Период обновления данных в базе (сек) <input name="db_update_period" type="text" value="{{settings['socket']['db_update_period']}}"/><br>
-        <input value="Применить" type="submit">
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <label for="store_days">Время хранения данных (дней):</label>
+            <input id="store_days" name="store_days" type="text" class="form-control" value="{{settings['db_settings']['store_days']}}" />
+        </div>
+        <div class="col-md-6 mb-4">
+            <label for="session_expire_days">Время авторизованной сессии (дней):</label>
+            <input id="session_expire_days" name="session_expire_days" class="form-control" type="text" value="{{settings['web_server']['session_expire_days']}}"/>
+        </div>
+        </div>
+        <div class="container pb-5 mb-5">
+            <input class="btn btn-lg btn-primary btn-block col-md-3 float-right" value="Применить" type="submit">
+        </div>
     </form>
 </div>
-<div>
-    <a href="/settings/change_password">Сменить пароль учётной записи</a>
-    <a href="settings/useradd">Добавить учётную запись</a>
-    <a href="settings/userdel">Удалить учётную запись</a>
-    <a href="/settings/reboot">Перезагрузить сервер</a>
+<div class="row">
+    <a href="/settings/change_password" class="btn btn-primary btn-block col-lg-2 mr-2 mb-4">Сменить пароль</a>
+    <a href="settings/useradd" class="btn btn-secondary col-lg-3 mr-2 mb-4">Добавить учётную запись</a>
+    <a href="settings/userdel" class="btn btn-secondary col-lg-3 mr-2 mb-4">Удалить учётную запись</a>
+    <a href="/settings/reboot" class="btn btn-secondary col-lg-3 mr-2 mb-4">Перезагрузить сервер</a>
 </div>
+
+
