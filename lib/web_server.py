@@ -153,7 +153,7 @@ class WebInterface(object):
         conf['socket']['db_update_period'] = request.forms.get('db_update_period')
         conf['web_server']['port'] = request.forms.get('port')
         conf['web_server']['session_expire_days'] = request.forms.get('session_expire_days')
-        conf['web_server']['page_size'] = request.forms.get('session_expire_days')
+        conf['web_server']['page_size'] = request.forms.get('page_size')
         conf['db_settings']['store_days'] = request.forms.get('store_days')
         if self.user:
             with open('settings.ini', 'w') as file:
