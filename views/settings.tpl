@@ -2,11 +2,15 @@
 <div>
     <form action="/settings" method="post">
     <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-12 col-xl-4 mb-4">
+            <label for="page_size">Размер страницы для отображения данных (записей):</label>
+            <input id="page_size" name="page_size" class="form-control" type="text" value="{{settings['web_server']['page_size']}}"/>
+        </div>
+        <div class="col-md-6 col-xl-4 mb-4">
             <label for="store_days">Время хранения данных (дней):</label>
             <input id="store_days" name="store_days" type="text" class="form-control" value="{{settings['db_settings']['store_days']}}" />
         </div>
-        <div class="col-md-6 mb-4">
+        <div class="col-md-6 col-xl-4 mb-4">
             <label for="session_expire_days">Время авторизованной сессии (дней):</label>
             <input id="session_expire_days" name="session_expire_days" class="form-control" type="text" value="{{settings['web_server']['session_expire_days']}}"/>
         </div>

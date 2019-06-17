@@ -31,12 +31,11 @@
     </style>
     <!-- Custom styles for this template -->
     <link href="https://getbootstrap.com/docs/4.3/examples/sticky-footer-navbar/sticky-footer-navbar.css" rel="stylesheet">
-       <!-- <link href="https://getbootstrap.com/docs/4.3/examples/sign-in/signin.css" rel="stylesheet"> -->
     </head>
-    <body class="d-flex flex-column">
+    <body class="d-flex flex-column h-100">
         % include('header.tpl', user = user, page = page)
-<main role="main" class="flex-shrink-0">
-    <div class="container h-100">
+<main role="main" class="h-100">
+    <div class="container mt-5 pt-5">
         {{!base}}
     </div>
 </main>

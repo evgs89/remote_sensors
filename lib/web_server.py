@@ -10,20 +10,28 @@ import sqlite3
 
 class WebInterface(object):
     def __init__(self):
-        conf = configparser.ConfigParser(allow_no_value = True)
-        conf.read('settings.ini')
         self.user = None
-        self.settings = conf['socket']
-        self.web_settings = conf['web_server']
-        self.page_size = int(self.web_settings['page_size'])
-        self.db_engine = DataEngine(self.settings['host'],
-                                    self.settings['port'],)
-        self.db_engine.start_sync_loop(self.settings['db_update_period'])
+        self._read_settings()
         self.bound_bottle()
         try:
             run(host = self.web_settings['host'], port = int(self.web_settings['port']))
         except OSError as e:
             print(e)
+
+    def _read_settings(self):
+        conf = configparser.ConfigParser(allow_no_value = True)
+        conf.read('settings.ini')
+        settings = conf['socket']
+        self.web_settings = conf['web_server']
+        self.page_size = int(self.web_settings['page_size'])
+        db_autoclean = int(conf['db_settings']['store_days'])
+        try:
+            self.db_engine.db_autoclean_days = db_autoclean
+        except AttributeError:
+            self.db_engine = DataEngine(settings['host'],
+                                        settings['port'],
+                                        db_autoclean_days = db_autoclean)
+            self.db_engine.start_sync_loop(settings['db_update_period'])
 
     def bound_bottle(self):
         route('/')(self.last_messages)
@@ -145,10 +153,12 @@ class WebInterface(object):
         conf['socket']['db_update_period'] = request.forms.get('db_update_period')
         conf['web_server']['port'] = request.forms.get('port')
         conf['web_server']['session_expire_days'] = request.forms.get('session_expire_days')
+        conf['web_server']['page_size'] = request.forms.get('session_expire_days')
         conf['db_settings']['store_days'] = request.forms.get('store_days')
         if self.user:
             with open('settings.ini', 'w') as file:
                 conf.write(file)
+            self._read_settings()
         redirect('/settings')
 
     @view('change_password')
