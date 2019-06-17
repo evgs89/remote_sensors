@@ -1,4 +1,4 @@
-% rebase('base.tpl', user = user)
+% rebase('base.tpl', user = user, page = 'logout')
 % if user:
 <div>
     <h1 class="mt-5">Уверены, что хотите выйти?</h1>

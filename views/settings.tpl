@@ -1,4 +1,4 @@
-% rebase('base.tpl', user = user, settings = settings)
+% rebase('base.tpl', user = user, settings = settings, footer = True, page = 'settings')
 <div>
     <form action="/settings" method="post">
     <div class="row">
@@ -11,8 +11,8 @@
             <input id="session_expire_days" name="session_expire_days" class="form-control" type="text" value="{{settings['web_server']['session_expire_days']}}"/>
         </div>
         </div>
-        <div class="container-fluid mb-5">
-            <input class="btn btn-lg btn-primary btn-block" value="Применить" type="submit">
+        <div class="container pb-5 mb-5">
+            <input class="btn btn-lg btn-primary btn-block col-md-3 float-right" value="Применить" type="submit">
         </div>
     </form>
 </div>
@@ -23,12 +23,4 @@
     <a href="/settings/reboot" class="btn btn-secondary col-lg-3 mr-2 mb-4">Перезагрузить сервер</a>
 </div>
 
-<footer class="footer mt-auto py-3">
-  <div class="container">
-    <span class="text-muted">
-        server application developer: <a href="mailto:evgs89@gmail.com">evgs89</a><br>
-        home icon by: <a href="https://pngtree.com/free-icons/commodity  home button">from pngtree.com</a>
-    </span>
-  </div>
-</footer>
 

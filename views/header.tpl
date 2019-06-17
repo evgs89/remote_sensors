@@ -1,3 +1,4 @@
+% page = page
 <header>
 <!-- Fixed navbar -->
     <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
@@ -8,15 +9,27 @@
     <div class="collapse navbar-collapse" id="navbarCollapse">
         <ul class="navbar-nav mr-auto">
             % if user:
+            % if page == 'settings':
             <li class="nav-item active">
-                <a class="nav-link" href="/settings">Настройки</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link active" href="/logout">Выйти из системы</a>
-            </li>
             % else:
             <li class="nav-item">
-                <a class="nav-link active" href="/login">Авторизация</a>
+            % end
+                <a class="nav-link" href="/settings">Настройки</a>
+            </li>
+            % if page == 'logout':
+            <li class="nav-item active">
+            % else:
+            <li class="nav-item">
+            % end
+                <a class="nav-link" href="/logout">Выйти из системы</a>
+            </li>
+            % else:
+            % if page == 'login':
+            <li class="nav-item active">
+            % else:
+            <li class="nav-item">
+            % end
+                <a class="nav-link" href="/login">Авторизация</a>
             </li>
             % end
         </ul>
