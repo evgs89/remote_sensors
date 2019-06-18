@@ -15,16 +15,13 @@ body {
   background-color: #f5f5f5;
 }
 
+}
+
 
 /* Custom page CSS
 -------------------------------------------------- */
 /* Not required for template or sticky footer method. */
 
-.container {
-  width: auto;
-  max-width: 1800px;
-  padding: 0 15px;
-}
 </style>
 
 <footer class="footer mt-auto">
