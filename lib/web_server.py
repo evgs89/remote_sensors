@@ -2,19 +2,65 @@ import configparser
 import os
 from time import sleep
 
-from lib.bottle import route, run, post, request, view, template, abort, response, redirect, static_file
+from lib.bottle import route, run, post, request, view, template, abort, response, redirect, static_file, Bottle, \
+    ServerAdapter, server_names
 from lib.data_engine import DataEngine
 from datetime import datetime, timedelta
 import sqlite3
+
+
+class SSLify(object):
+    def __init__(self, app, permanent = False):
+        self.app = app
+        self.permanent = permanent
+
+        before_request_decorator = self.app.hook('before_request')
+        before_request_decorator(self.https_redirect)
+
+    def https_redirect(self):
+        '''Redirect incoming HTTPS requests to HTTPS'''
+
+        if not request.get_header('X-Forwarded-Proto', 'http') == 'https':
+            if request.url.startswith('http://'):
+                url = request.url.replace('http://', 'https://', 1)
+                code = 301 if self.permanent else 302
+                redirect(url, code = code)
+
+
+class SSLWebServer(ServerAdapter):
+    """
+    CherryPy web server with SSL support.
+    """
+
+    def run(self, handler):
+        """
+        Runs a CherryPy Server using the SSL certificate.
+        """
+        from cheroot import wsgi
+        from cheroot.ssl.builtin import BuiltinSSLAdapter
+
+        server = wsgi.Server((self.host, self.port), handler)
+
+        server.ssl_adapter = BuiltinSSLAdapter("cert/rootCA.pem", "cert/rootCA.key", certificate_chain = "cert/remotesensors.crt")
+
+        try:
+            server.start()
+        except:
+            server.stop()
+
+
+server_names['ssl'] = SSLWebServer
 
 
 class WebInterface(object):
     def __init__(self):
         self.user = None
         self._read_settings()
+        self.app = Bottle()
+        SSLify(self.app)
         self.bound_bottle()
         try:
-            run(host = self.web_settings['host'], port = int(self.web_settings['port']))
+            self.app.run(host = self.web_settings['host'], port = int(self.web_settings['port']), server = 'ssl')
         except OSError as e:
             print(e)
 
@@ -34,23 +80,24 @@ class WebInterface(object):
             self.db_engine.start_sync_loop(settings['db_update_period'])
 
     def bound_bottle(self):
-        route('/')(self.last_messages)
-        route('/device/<dev_id>')(self.messages_by_id)
-        route('/delete')(self.delete_messages)
-        route('/delete/accept')(self.delete_messages_accepted)
-        route('/login')(self.login)
-        post('/login')(self.do_login)
-        route('/logout')(self.logout)
-        route('/settings')(self.change_settings)
-        post('/settings')(self.do_change_settings)
-        route('/settings/change_password')(self.change_password)
-        post('/settings/change_password')(self.do_change_password)
-        route('/settings/useradd')(self.useradd)
-        post('/settings/useradd')(self.do_useradd)
-        route('/settings/userdel')(self.userdel)
-        post('/settings/userdel')(self.do_userdel)
-        route('/settings/reboot')(self.reboot)
-        route('/static/<filename>')(self.server_static)
+        self.app.route('/')(self.last_messages)
+        self.app.route('/device/<dev_id>')(self.messages_by_id)
+        self.app.route('/delete')(self.delete_messages)
+        self.app.route('/delete/accept')(self.delete_messages_accepted)
+        self.app.route('/login')(self.login)
+        self.app.post('/login')(self.do_login)
+        self.app.route('/logout')(self.logout)
+        self.app.route('/settings')(self.change_settings)
+        self.app.post('/settings')(self.do_change_settings)
+        self.app.route('/settings/change_password')(self.change_password)
+        self.app.post('/settings/change_password')(self.do_change_password)
+        self.app.route('/settings/useradd')(self.useradd)
+        self.app.post('/settings/useradd')(self.do_useradd)
+        self.app.route('/settings/userdel')(self.userdel)
+        self.app.post('/settings/userdel')(self.do_userdel)
+        self.app.route('/settings/reboot')(self.reboot)
+        self.app.route('/static/<filename>')(self.server_static)
+        self.app.route('/static/<filename>')(self.server_static)
 
     def _check_cookie(self):
         session_id = request.get_cookie('session_id')

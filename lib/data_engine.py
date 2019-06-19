@@ -12,9 +12,9 @@ class DataEngine(object):
     def __init__(self, host, port, db_file = 'db.sqlite', db_autoclean_days = 60):
         self.datetime_format = "%Y-%m-%d %H:%M:%S.%f"  # it's not familiar for Russia, but sorting would work correctly
         self._db_file = db_file
+        self._db_init()
         self.db_autoclean_days = db_autoclean_days
         self.L = Listener(host, int(port))
-        self._db_init()
         self._t = None
         self._sync_loop_enabled = True
 
