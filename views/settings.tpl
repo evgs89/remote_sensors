@@ -22,17 +22,23 @@
             <label for="session_expire_days">Время авторизованной сессии (дней):</label>
             <input id="session_expire_days" name="session_expire_days" class="form-control" type="text" value="{{settings['web_server']['session_expire_days']}}"/>
         </div>
-        <div class="container col-12 col-md-4 col-xl-3 mb-4">
-            <input class="btn btn-lg btn-primary btn-block align-text-bottom" value="Применить" type="submit">
+        <div class="container col-12 col-md-4 col-xl-3 mb-4 align-bottom">
+            <input class="btn btn-lg btn-primary btn-block" value="Применить" type="submit">
         </div>
     </div>
     </form>
-
 </div>
-
-<div class="container row">
-    <a href="/settings/change_password" class="btn btn-primary btn-block col-lg-2 mb-4">Сменить пароль</a>
-    <a href="settings/useradd" class="btn btn-secondary col-lg-3 mb-4">Добавить учётную запись</a>
-    <a href="settings/userdel" class="btn btn-secondary col-lg-3 mb-4">Удалить учётную запись</a>
-    <a href="/settings/reboot" class="btn btn-secondary col-lg-3 mb-4">Перезагрузить сервер</a>
+<div class="container row mt-5">
+    <div class="col-lg-3">
+        <a href="/settings/change_password" class="btn btn-primary btn-block mb-4 mr-2">Сменить пароль</a>
     </div>
+    <div class="col-lg-3">
+        <a href="settings/useradd" class="btn btn-secondary btn-block mb-4 mr-2">Добавить учётную запись</a>
+    </div>
+    <div class="col-lg-3">
+        <a href="settings/userdel" class="btn btn-secondary btn-block mb-4 mr-2">Удалить учётную запись</a>
+    </div>
+    <div class="col-lg-3">
+        <a href="/settings/reboot" class="btn btn-secondary btn-block mb-4 mr-2">Перезагрузить сервер</a>
+    </div>
+</div>
