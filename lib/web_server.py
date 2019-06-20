@@ -2,7 +2,7 @@ import configparser
 import os
 from time import sleep
 
-from lib.bottle import route, run, post, request, view, template, abort, response, redirect, static_file, Bottle, \
+from lib.bottle import request, view, template, abort, response, redirect, static_file, Bottle, \
     ServerAdapter, server_names
 from lib.data_engine import DataEngine
 from datetime import datetime, timedelta
@@ -41,15 +41,19 @@ class SSLWebServer(ServerAdapter):
 
         server = wsgi.Server((self.host, self.port), handler)
 
-        server.ssl_adapter = BuiltinSSLAdapter("cert/rootCA.pem", "cert/rootCA.key", certificate_chain = "cert/remotesensors.crt")
+        server.ssl_adapter = BuiltinSSLAdapter(certificate = "cert/remotesensors.crt", private_key = "cert/remotesensors.key",
+                                               certificate_chain = "cert/rootCA.pem")
 
         try:
             server.start()
-        except:
+        except Exception as e:
+            print('SERVER START ERROR:')
+            print(str(e))
             server.stop()
 
 
 server_names['ssl'] = SSLWebServer
+
 
 
 class WebInterface(object):
@@ -57,10 +61,13 @@ class WebInterface(object):
         self.user = None
         self._read_settings()
         self.app = Bottle()
-        SSLify(self.app)
+        if self._ssl:
+            SSLify(self.app)
         self.bound_bottle()
         try:
-            self.app.run(host = self.web_settings['host'], port = int(self.web_settings['port']), server = 'ssl')
+            print(self._ssl)
+            self.app.run(host = self.web_settings['host'], port = int(self.web_settings['port']),
+                         server = 'ssl' if self._ssl else 'wsgiref')
         except OSError as e:
             print(e)
 
@@ -69,6 +76,10 @@ class WebInterface(object):
         conf.read('settings.ini')
         settings = conf['socket']
         self.web_settings = conf['web_server']
+        try:
+            self._ssl = conf.getboolean('web_server', 'https_enabled')
+        except AttributeError as e:
+            self._ssl = False
         self.page_size = int(self.web_settings['page_size'])
         db_autoclean = int(conf['db_settings']['store_days'])
         try:
